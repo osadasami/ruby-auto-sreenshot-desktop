@@ -7,6 +7,7 @@ commands = [
   :rec,
   :vid,
   :ts,
+  :build
 ]
 
 return unless commands.include?(command)
@@ -26,17 +27,20 @@ def auto_screenshot(time)
 end
 
 def create_video
-  draw_timestamp_all
-
   filename = Time.now.to_s
   `ffmpeg -framerate 2 -pattern_type glob -i "screenshots/*.jpg" -c:v libx264 -r 30 -pix_fmt yuv420p videos/"#{filename}.mp4"`
+end
+
+def remove_screenshots
   FileUtils.rm_f(Dir.glob('screenshots/*'))
 end
 
 def draw_timestamp_all
   screens_path = Dir['screenshots/*.jpg']
 
-  screens_path.each do |screen|
+  screens_path.each_with_index do |screen, i|
+    puts "[#{i+1}/#{screens_path.size}]"
+
     draw_timestamp(screen)
   end
 end
@@ -54,6 +58,13 @@ def draw_timestamp(path)
   `
 end
 
+def build
+  draw_timestamp_all
+  create_video
+  remove_screenshots
+end
+
 auto_screenshot(time) if command == :rec
-create_video if command == :vid
 draw_timestamp_all if command == :ts
+create_video if command == :vid
+build if command == :build
